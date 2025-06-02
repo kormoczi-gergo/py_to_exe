@@ -40,28 +40,23 @@ int main(int argc, char const *argv[])
         boolDesktopApp[0] = 'n';
     }
 
-    //  1    2 3 slashes
-    //  /home/g/Desktop/c/py_to_exe/withdesktopa.c
-    //users home folders
-    char usersPath[200];//stores the pat of the users directory  /home/ker/
-    int slashes = 0; //this determines if we went trough the users diectory by counting slashes
-    
-    for(int i = 0; i < sizeof(usersPath); i++){ //appends carachters from the path , until the user's directory is found
-        usersPath[strlen(usersPath)] = path[i];
-        if(path[i] == '/'){
-            slashes += 1;
-        }
-        if(slashes >= 3){
-            break;
-        }
+    //get the path of the user
+    char *usersPath;
+    usersPath = getenv("HOME");//stores the pat of the users directory  /home/ker/
+
+    if(usersPath != NULL){ //error handling
+        printf("user's repository found\n");
     }
-    printf("user's repository found\n");
+    else{
+        printf("user's home directory could not be found\n");
+        return 1;
+    }
 
     //opening output folder in the users folder
     //making the command string   "mkdir %spy_to_exe_output", usersPath
     char outputFolder[205]; ///home/ker/py_to_exe_output
     strncpy(outputFolder, usersPath, strlen(usersPath));
-    strncat(outputFolder, "py_to_exe_output/", sizeof("py_to_exe_output/"));
+    strncat(outputFolder, "/py_to_exe_output/", sizeof("/py_to_exe_output/"));
 
     char mkdir[210] = "mkdir "; //mkdir /home/ker/py_to_exe_output
     strncat(mkdir, outputFolder, sizeof(outputFolder));
@@ -88,7 +83,7 @@ int main(int argc, char const *argv[])
     while(fgets(buffer, sizeof(buffer), fileptr)!= NULL){//append the python script character by character into code variable
         for(int i = 0; i < strlen(buffer); i ++){
             if(buffer[i] == '\n'){
-                code[strlen(code)] = '$';   //to write the whole py script into a char[] variable in c we need to replace every newline character with a unique char wich is going to be replaced back in the executer c after it will not matter wether there are \n's
+                code[strlen(code)] = '\f';   //to write the whole py script into a char[] variable in c we need to replace every newline character with a unique char wich is going to be replaced back in the executer c after it will not matter wether there are \n's
             }
             else if(buffer[i] == '"'){//to store the script as a char[] the format ot the " nned to be \t
                 code[strlen(code)] = '\\'; //code[i] = \\ -> wich will be stored as a single '\'
@@ -125,7 +120,7 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
-    char embeddedC[] = "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n int main(int argc, char const *argv[]){char code[999999] = \"%s\";for(int i = 0; i < strlen(code); i++){if(code[i] == '$'){code[i] = '\\n';}}FILE * fptr;fptr = fopen(\"temporary9583.py\", \"w\");fwrite(code, sizeof(char), strlen(code), fptr);fclose(fptr);system(\"python3 temporary9583.py\");remove(\"temporary9583.py\");return 0;}";
+    char embeddedC[] = "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n int main(int argc, char const *argv[]){char code[999999] = \"%s\";for(int i = 0; i < strlen(code); i++){if(code[i] == '\f'){code[i] = '\\n';}}FILE * fptr;fptr = fopen(\"temporary9583.py\", \"w\");fwrite(code, sizeof(char), strlen(code), fptr);fclose(fptr);system(\"python3 temporary9583.py\");remove(\"temporary9583.py\");return 0;}";
 
     //writing a functional c scipt: contains the py script, able to make a py script with it, and can execute it, and delete it after 
     int charsWritten = fprintf(fileptr, embeddedC, code);
@@ -167,29 +162,17 @@ int main(int argc, char const *argv[])
         printf("path of image that will be the icon of the app(type n if not needed): ");
         //fgets(pathofIcon, sizeof(pathofIcon), stdin);
         fgets(pathofIcon, sizeof(pathofIcon), stdin);
-        if(strlen(pathofIcon) > 0){
+        if(strlen(pathofIcon) > 1){
             printf("input stored: %s\n", pathofIcon);
-            
-            //check if image exists
-            fileptr = fopen(pathofIcon, "w");
-            if(fileptr != NULL){
-                printf("image at the specified does not exists\n");
-                //clean the path so its not included in the desktop
-                for(int i = 0; i <= strlen(pathofIcon); i++)
-                { pathofIcon[i] = '\0';}
-            }
-            else{
-                printf("image exists");
-            }
         }
         else{
-            printf("input could not be stored\n");
+            printf("no icon needed");
         }
 
         //make the path of the desktop
         char desktopPath[300];
         strncpy(desktopPath, usersPath, sizeof(usersPath));
-        strncat(desktopPath, "Desktop/", sizeof("Desktop/"));
+        strncat(desktopPath, "/Desktop/", sizeof("/Desktop/"));
 
 
         //make path for the desktop app
@@ -219,7 +202,7 @@ int main(int argc, char const *argv[])
 
         strncat(contentOfDesktopApp, exePath, strlen(exePath));  //specify the source of the executable
 
-        if(strlen(pathofIcon) > 0){ //specify the path of icon if needed
+        if(strlen(pathofIcon) > 1){ //specify the path of icon if needed
             strncat(contentOfDesktopApp, "Icon=", sizeof("Icon="));
             strncat(contentOfDesktopApp, pathofIcon, strlen(pathofIcon));
         }
