@@ -4,12 +4,39 @@
 
 int main(int argc, char const *argv[])
 {
+    //making sure python and c compiler is installed
+    int checkPython = system("python3 --version > /dev/null 2>&1"); // checks if python is installed | succes-> 0 else-> != 0
+    if(checkPython == 0){ //succes=good
+        printf("python is currently installed\n");
+    } else { // instruction
+        printf("in order to use py_to_exe you need to have python installed,  in this terminal type:\n1: sudo apt\n2: sudo apt install python\n\t after this you will be able to use py_to_exe\n");
+        return 1;
+    }
+    int checkGcc = system("gcc --version > /dev/null 2>&1"); // check gcc
+    if(checkGcc == 0){
+        printf("gcc is currently installed\n");
+    } else {
+        printf("in order to use py_to_exe you need to have atlest gcc build-essential installed,  in this terminal type:\n1: sudo apt\n2: sudo apt install build-essential\n\t after this you will be able to use py_to_exe\n");
+        return 1;
+    }
+    system("clear");
+
+    //logo
+    printf("         _____   __    _\n");
+    printf("        /  __ \\  \\ \\  | |          _       ______   __    __    ______   \n");
+    printf("        | |__| |  \\ \\_| |    _____| \\     /  ___ \\  \\ \\  / /   /  ___ \\  \n");
+    printf("        |  ___/    \\    /   |        \\   |  |___| |  \\ \\/ /   |  |___| | \n");
+    printf("        | |         |  |    |______  /   |   _____|   |  |    |   _____| \n");
+    printf("        | |        /  /           |_/    |  |_____   / /\\ \\   |  |_____  \n");
+    printf("        |_|       |__|                    \\______/  /_/  \\_\\   \\______/  \n");
+    printf("______________________________________________________________________\n");
+
     //store path of input
     char path[400];
-    printf("Path of python file you wish to convert into an executable: ");
+    printf("Path of python file: ");
     if(fgets(path, sizeof(path), stdin) != NULL){//error handling if path not great format
         path[strcspn(path, "\n")] = '\0';
-        printf("path stored successfully\n");
+        printf("path stored successfully: %s\n\n", path);
     }
     else{
         perror("error occured during the input of the path\n");
@@ -18,9 +45,14 @@ int main(int argc, char const *argv[])
 
     //project name
     char name[40];
-    printf("name of the project(can't include spaces): ");
+    printf("Name of the project(can't include spaces): ");
     if(fgets(name, sizeof(name), stdin) != NULL){
-        printf("project name stored:%s", name);
+        printf("project name stored:%s\n", name);
+        for(int i = 1; i < strlen(name); i++){ //removing \n
+            if(name[i] == '\n'){
+                name[i] = '\0';
+            }
+        }
     }
     else{
         printf("error occured while processing what you entered(name of the project will be output)\n");
@@ -45,7 +77,7 @@ int main(int argc, char const *argv[])
     usersPath = getenv("HOME");//stores the pat of the users directory  /home/ker/
 
     if(usersPath != NULL){ //error handling
-        printf("user's repository found\n");
+        printf("user's repository found: %s\n", usersPath);
     }
     else{
         printf("user's home directory could not be found\n");
@@ -61,8 +93,7 @@ int main(int argc, char const *argv[])
     char mkdir[210] = "mkdir "; //mkdir /home/ker/py_to_exe_output
     strncat(mkdir, outputFolder, sizeof(outputFolder));
 
-    printf("mkdir command: %s", mkdir);
-    system(mkdir);
+    system(mkdir); //create output folder
 
 
     //open input file
@@ -120,7 +151,7 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
-    char embeddedC[] = "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n int main(int argc, char const *argv[]){char code[999999] = \"%s\";for(int i = 0; i < strlen(code); i++){if(code[i] == '\f'){code[i] = '\\n';}}FILE * fptr;fptr = fopen(\"temporary9583.py\", \"w\");fwrite(code, sizeof(char), strlen(code), fptr);fclose(fptr);system(\"python3 temporary9583.py\");remove(\"temporary9583.py\");return 0;}";
+    char embeddedC[] = "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n int main(int argc, char const *argv[]){int checkPython = system(\"python3 --version > /dev/null 2>&1\");if(checkPython != 0){printf(\"in order to execute this you need to have python installed, in a terminal:\\n- sudo apt\\n- sudo apt install python\\n\t after this you will be able to execute this\\n\");return 1;}char code[999999] = \"%s\";for(int i = 0; i < strlen(code); i++){if(code[i] == '\\f'){code[i] = '\\n';}}FILE * fptr;fptr = fopen(\"temporary9583.py\", \"w\");fwrite(code, sizeof(char), strlen(code), fptr);fclose(fptr);system(\"python3 temporary9583.py\");remove(\"temporary9583.py\");return 0;}";
 
     //writing a functional c scipt: contains the py script, able to make a py script with it, and can execute it, and delete it after 
     int charsWritten = fprintf(fileptr, embeddedC, code);
@@ -157,13 +188,23 @@ int main(int argc, char const *argv[])
 
     //create desktop app in the output folder if needed
     if(boolDesktopApp[0] == 'y'){
-        //icon to exe if needed
-        char pathofIcon[200];
-        printf("path of image that will be the icon of the app(type n if not needed): ");
+
+        char boolTerminal[10];         //choice of terminal 
+        char terminalCommand[18]= "\nTerminal=";
+        printf("\nDoes the desktop app needs a terminal with executing? y/n: ");
+        fgets(boolTerminal, sizeof(boolTerminal), stdin);
+        if(boolTerminal[0] == 'y'){
+            strncat(terminalCommand, "true\0", sizeof("true\0"));//needed
+        }else{
+            strncat(terminalCommand, "false\0", sizeof("false\0")); //not
+        }
+
+        char pathofIcon[200]; //icon to exe if needed
+        printf("\npath of image(for desktop app icon) leave blank if not needed: ");
         //fgets(pathofIcon, sizeof(pathofIcon), stdin);
         fgets(pathofIcon, sizeof(pathofIcon), stdin);
         if(strlen(pathofIcon) > 1){
-            printf("input stored: %s\n", pathofIcon);
+            printf("path stored: %s\n", pathofIcon);
         }
         else{
             printf("no icon needed");
@@ -198,21 +239,23 @@ int main(int argc, char const *argv[])
 
         strncat(contentOfDesktopApp, name, strlen(name)); // specify projname
 
-        strncat(contentOfDesktopApp, "Exec=", sizeof("Exec="));
+        strncat(contentOfDesktopApp, "\nExec=", sizeof("\nExec="));
 
         strncat(contentOfDesktopApp, exePath, strlen(exePath));  //specify the source of the executable
 
         if(strlen(pathofIcon) > 1){ //specify the path of icon if needed
-            strncat(contentOfDesktopApp, "Icon=", sizeof("Icon="));
+            strncat(contentOfDesktopApp, "\nIcon=", sizeof("\nIcon="));
             strncat(contentOfDesktopApp, pathofIcon, strlen(pathofIcon));
         }
+
+        strncat(contentOfDesktopApp, terminalCommand, sizeof(terminalCommand));
         
-        strncat(contentOfDesktopApp, "\nTerminal=true\nCategories=Utility;Development;", sizeof("\nTerminal=true\nCategories=Utility;Development;"));
+        strncat(contentOfDesktopApp, "\nCategories=Utility;Development;", sizeof("\nTerminal=true\nCategories=Utility;Development;"));
 
         //opening desktop app
         fileptr = fopen(appPath, "w");
         if(fileptr != NULL){
-            printf("desktop app succesfully created\n");
+            printf("\ndesktop app succesfully created\n");
         }
         else{
             printf("error occured while creating desktop app\n");
@@ -233,17 +276,17 @@ int main(int argc, char const *argv[])
 
 
         //path of the output
-        printf("You can find the converted executable in the following path: %s/%s\n",outputFolder, name);
-        printf("You can find the desktop app in the folllowing path: %s\n", appPath);
+        printf("_____\npath of output:\n");
+        printf("\texecutable's path: %s%s\n",outputFolder, name);
+        printf("\tdesktop app: %s\n", appPath);
     }
     else{
-    //for clarification
-    printf("You can find the converted executable in the following path: %s/%s\n",outputFolder, name);
+        //path of the output
+        printf("_____\npath of output:\n");
+        printf("\texecutable's path: %s/%s\n",outputFolder, name);
     }
-
-
     char help[10];
-    printf("type h for further informations: ");
+    printf("\ntype h for further informations or press enter to exit: ");     //does not close the window immidiatelly
     fgets(help, sizeof(help), stdin);
     if(help[0] == 'h'){
         printf("__________\nmanual\n");
@@ -251,9 +294,5 @@ int main(int argc, char const *argv[])
         printf("However, the desktop app is a shortcut to the executable:\n -so if you delete the execuble or move it away it will not work unless you chage source of the exec that the app is executing.");
         printf(" -if you change the place of the image you selected as an icon, you will have to do the mentioned changes in the source oh the .desktop, but with the Icon variable.");
     }
-
-    //does not close the window immidiatelly
-    getchar();
-
     return 0;
 }
